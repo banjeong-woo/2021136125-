@@ -1,0 +1,40 @@
+Widget _textDivier() { // ------ 1
+return const Padding(
+padding: EdgeInsets.symmetric(horizontal: 80.0),
+child: Row(
+children: [
+Expanded(
+child: Divider(
+color: Colors.white,
+),
+),
+Padding(
+padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 20),
+child: AppFont(
+'회원 가입/로그인',
+color: Colors.white,
+),
+),
+Expanded(
+child: Divider(
+color: Colors.white,
+),
+),
+],
+),
+),
+}
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+body: Column(
+crossAxisAlignment: CrossAxisAlignment.stretch,
+mainAxisAlignment: MainAxisAlignment.center,
+children: [
+_logoView(),
+_textDivier(), // ------ 1
+],
+),
+);
+}
