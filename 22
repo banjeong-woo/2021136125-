@@ -1,0 +1,121 @@
+ </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="location-row">
+        <div class="location-name">
+          📍 성남시, 경기도
+        </div>
+        <button class="refresh-btn" onclick="fetchWeather()">↻ 새로고침</button>
+      </div>
+
+      <div id="app-content">
+        <div class="loader">날씨 정보를 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WMO_CODES = {
+      0: ['맑음', '☀️'],
+      1: ['대체로 맑음', '🌤️'], 2: ['부분 흐림', '⛅'], 3: ['흐림', '☁️'],
+      45: ['안개', '🌫️'], 48: ['안개', '🌫️'],
+      51: ['가벼운 이슬비', '🌦️'], 53: ['이슬비', '🌦️'], 55: ['강한 이슬비', '🌧️'],
+      61: ['가벼운 비', '🌧️'], 63: ['비', '🌧️'], 65: ['강한 비', '🌧️'],
+      71: ['가벼운 눈', '🌨️'], 73: ['눈', '❄️'], 75: ['강한 눈', '❄️'],
+      80: ['소나기', '🌦️'], 81: ['강한 소나기', '🌧️'], 82: ['폭우', '⛈️'],
+      95: ['뇌우', '⛈️'], 96: ['우박 동반 뇌우', '⛈️'], 99: ['강한 뇌우', '⛈️']
+    };
+
+    function getWindDir(deg) {
+      const dirs = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+      return dirs[Math.round(deg / 45) % 8];
+    }
+
+    function getNow() {
+      return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function fetchWeather() {
+      const app = document.getElementById('app-content');
+      app.innerHTML = '<div class="loader">날씨 정보를 불러오는 중...</div>';
+
+      try {
+        const lat = 37.4386, lon = 127.1378;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code&timezone=Asia%2FSeoul&forecast_days=1&wind_speed_unit=ms`;
+
+        const res = await fetch(url);
+        const d = await res.json();
+        const c = d.current;
+        const [desc, icon] = WMO_CODES[c.weather_code] || ['알 수 없음', '❓'];
+
+        const now = new Date();
+        const nowHour = now.getHours();
+        const hours = d.hourly.time.map(t => new Date(t).getHours());
+        const hourlyTemps = d.hourly.temperature_2m;
+        const hourlyCodes = d.hourly.weather_code;
+
+        const upcoming = [];
+        for (let i = 0; i < hours.length && upcoming.length < 8; i++) {
+          if (hours[i] >= nowHour) upcoming.push(i);
+        }
+
+        const hourlyHTML = upcoming.map(i => {
+          const h = hours[i];
+          const [, ic] = WMO_CODES[hourlyCodes[i]] || ['', '❓'];
+          const label = h === nowHour ? '지금' : `${h}시`;
+          return `
+            <div class="hourly-item">
+              <div class="hourly-time">${label}</div>
+              <div class="hourly-icon">${ic}</div>
+              <div class="hourly-temp">${Math.round(hourlyTemps[i])}°</div>
+            </div>
+          `;
+        }).join('');
+
+        app.innerHTML = `
+          <div class="main-weather">
+            <div class="weather-icon">${icon}</div>
+            <div class="temperature">${Math.round(c.temperature_2m)}°</div>
+            <div class="feels-like">체감온도 ${Math.round(c.apparent_temperature)}°C</div>
+            <div class="weather-desc">${desc}</div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <div class="detail-icon">💧</div>
+              <div class="detail-label">습도</div>
+              <div class="detail-value">${c.relative_humidity_2m}%</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-icon">💨</div>
+              <div class="detail-label">풍속</div>
+              <div class="detail-value">${c.wind_speed_10m.toFixed(1)} m/s</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-icon">🧭</div>
+              <div class="detail-label">풍향</div>
+              <div class="detail-value">${getWindDir(c.wind_direction_10m)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-icon">🌧️</div>
+              <div class="detail-label">강수량</div>
+              <div class="detail-value">${c.precipitation} mm</div>
+            </div>
+          </div>
+
+          <p class="section-title">시간대별 예보</p>
+          <div class="hourly-grid">${hourlyHTML}</div>
+
+          <div class="updated-time">마지막 업데이트: ${getNow()}</div>
+        `;
+      } catch (e) {
+        app.innerHTML = '<div class="error">⚠️ 날씨 정보를 불러오지 못했어요.<br>인터넷 연결을 확인해주세요.</div>';
+      }
+    }
+
+    fetchWeather();
+  </script>
+</body>
+</html>
