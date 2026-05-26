@@ -1,0 +1,23 @@
+디렉토리 구조
+lib/
+├── main.dart
+├── app.dart
+├── presentation/
+│   
+├── screens/
+│   
+│   
+├── widgets/
+└── theme/
+├── application/
+│   
+└── view_models/
+├── domain/
+│   
+├── entities/
+│   
+└── services/
+└── data/
+├── repositories/
+├── api/
+└── local/
